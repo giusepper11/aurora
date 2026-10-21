@@ -2,6 +2,7 @@
 
 #include "depth_peek.hpp"
 #include "pipeline_cache.hpp"
+#include "present_observer.hpp"
 #include "recording.hpp"
 #include "render_worker.hpp"
 #include "resource_cache.hpp"
@@ -41,6 +42,7 @@ namespace {
 constexpr Module Log{"aurora::gfx"};
 
 Resources g_resources;
+PresentObserver g_presentObserver;
 
 enum class BufferMapState {
   Unmapped,
@@ -770,6 +772,22 @@ void gpu_synchronize() { render_worker::synchronize(); }
 
 void synchronize() { render_worker::synchronize(); }
 
+void notify_present_return() noexcept {
+  if (!g_presentObserver.enabled()) {
+    return;
+  }
+  const auto now = timestamp_ns(PresentClock::now());
+  uint32_t created = 0, queued = 0;
+  snapshot_pipeline_counts(created, queued);
+  g_presentObserver.publish({now > 0 ? static_cast<uint64_t>(now) : 0, 0,
+                             g_resources.stats.drawCallCount, g_resources.stats.mergedDrawCallCount,
+                             created, queued});
+}
+
+void set_present_callback(AuroraPresentCallback callback) noexcept {
+  g_presentObserver.setCallback(callback);
+}
+
 void after_present() noexcept {
   const auto now = PresentClock::now();
   const int64_t nowNs = timestamp_ns(now);
@@ -802,3 +820,6 @@ float calculate_fps() noexcept {
 
 const AuroraStats* aurora_get_stats() { return &aurora::gfx::detail::resources().stats; }
 float aurora_get_fps() { return aurora::gfx::calculate_fps(); }
+void aurora_set_present_callback(AuroraPresentCallback callback) {
+  aurora::gfx::set_present_callback(callback);
+}

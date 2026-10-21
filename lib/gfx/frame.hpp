@@ -44,5 +44,6 @@ uint32_t current_frame() noexcept;
 void after_submit() noexcept;
 void gpu_synchronize();
 void after_present() noexcept;
+void notify_present_return() noexcept;
 float calculate_fps() noexcept;
 } // namespace aurora::gfx

@@ -38,6 +38,24 @@ typedef struct {
 const AuroraStats* aurora_get_stats();
 float aurora_get_fps();
 
+// Host-observed successful Surface::Present return, BEFORE SaltyNX/pacing work.
+// Not a physical scanout-completion timestamp or calibrated GPU duration.
+// Draw counts are the worker's latest recorded counts, not a public frame-ID API.
+// Pipeline counters are independently atomically sampled, asynchronous totals.
+typedef struct {
+  uint64_t timestampNs;
+  uint64_t presentationId;
+  uint32_t drawCalls;
+  uint32_t mergedDrawCalls;
+  uint32_t pipelinesCreated;
+  uint32_t pipelinesQueued;
+} AuroraPresentEvent;
+typedef void (*AuroraPresentCallback)(const AuroraPresentEvent* event);
+// Callback runs on the serialized presentation producer, must not block/throw,
+// and must copy the event before returning. A concurrent unregister can leave
+// one callback in flight; its target must outlive renderer shutdown.
+void aurora_set_present_callback(AuroraPresentCallback callback);
+
 void aurora_enable_vsync(bool enabled);
 
 #ifdef __cplusplus

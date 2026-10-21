@@ -358,6 +358,7 @@ static std::atomic_ref createdPipelines{detail::resources().stats.createdPipelin
 #else
 struct AtomicStatRef {
   uint32_t& ref;
+  uint32_t load(std::memory_order) const { return __atomic_load_n(&ref, __ATOMIC_RELAXED); }
   uint32_t operator++() { return __atomic_add_fetch(&ref, 1, __ATOMIC_RELAXED); }
   uint32_t operator--() { return __atomic_sub_fetch(&ref, 1, __ATOMIC_RELAXED); }
   uint32_t operator++(int) { return __atomic_fetch_add(&ref, 1, __ATOMIC_RELAXED); }
@@ -370,6 +371,11 @@ struct AtomicStatRef {
 static AtomicStatRef queuedPipelines{detail::resources().stats.queuedPipelines};
 static AtomicStatRef createdPipelines{detail::resources().stats.createdPipelines};
 #endif
+
+void snapshot_pipeline_counts(uint32_t& created, uint32_t& queued) noexcept {
+  created = createdPipelines.load(std::memory_order_relaxed);
+  queued = queuedPipelines.load(std::memory_order_relaxed);
+}
 
 template <typename PipelineConfig>
 static PipelineCacheWrite make_pipeline_cache_write(ShaderType type, PipelineRef hash, const PipelineConfig& config,

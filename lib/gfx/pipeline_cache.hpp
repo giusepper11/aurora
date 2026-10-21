@@ -27,6 +27,8 @@ void shutdown_pipeline_cache();
 void begin_pipeline_frame();
 void end_pipeline_frame();
 void rebuild_pipeline_cache();
+// Independent atomic snapshots; not per-frame counters.
+void snapshot_pipeline_counts(uint32_t& created, uint32_t& queued) noexcept;
 
 PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLayout& layout);
 PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTargetLayout& layout);

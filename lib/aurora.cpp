@@ -385,6 +385,7 @@ void end_frame() noexcept {
         }
       }
       if (status == wgpu::Status::Success) {
+        gfx::notify_present_return();
         saltynx::on_present();
         gfx::after_present();
       } else {
